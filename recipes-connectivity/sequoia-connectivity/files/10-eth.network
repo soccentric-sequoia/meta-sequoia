@@ -1,0 +1,12 @@
+[Match]
+# Matches predictable names (enp2s0, enp3s0, eno1, end0) and traditional eth0.
+# Covers LattePanda Sigma/Mu onboard Intel I225-V / I219-LM Ethernet.
+Name=eth* en*
+
+[Network]
+DHCP=yes
+IPv6AcceptRA=yes
+VLAN=eth-vlan10
+
+[DHCPv4]
+RouteMetric=100

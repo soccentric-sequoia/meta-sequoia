@@ -1,0 +1,12 @@
+[Match]
+# Matches predictable names (wlp3s0, wlp2s0) and traditional wlan0.
+# Covers LattePanda Intel AX200/AX201/AX210 wireless adapters.
+Name=wlan* wlp*
+
+[Network]
+DHCP=yes
+IPv6AcceptRA=yes
+VLAN=wlan-vlan10
+
+[DHCPv4]
+RouteMetric=600

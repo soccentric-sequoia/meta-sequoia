@@ -1,0 +1,15 @@
+[Unit]
+Description=SWUpdate boot-slot detection (Sequoia Intel x86)
+Documentation=file:///usr/lib/sequoia-swupdate/swupdate-bootcheck.sh
+# Run as early as possible, before any service that might need the slot info.
+DefaultDependencies=no
+After=local-fs.target
+Before=swupdate.service network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/sequoia-swupdate/swupdate-bootcheck.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
