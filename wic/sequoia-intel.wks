@@ -26,24 +26,19 @@ bootloader --ptable gpt --timeout 3
 # ── EFI System Partition ──────────────────────────────────────────────────────
 # GRUB EFI binary + grub.cfg (custom A/B-aware, provided by sequoia-grub-cfg
 # recipe via GRUB_CFG = "${STAGING_DATADIR}/grub-efi/grub.cfg").
-# install-kernel-into-bootdir=false: kernel stays in rootfs at /boot/bzImage;
+# install-kernel-into-bootdir=false: kernel stays in rootfs at /boot/bzImage,
 # GRUB uses "search --label" to find the rootfs partition then loads the kernel.
-part /boot/efi --source bootimg-efi \
-    --sourceparams "format=grub-efi;loader=grub-efi;install-kernel-into-bootdir=false" \
-    --ondisk sda --fstype=vfat --label efi --active --align 1024 --fixed-size 256M
+part /boot/efi --source bootimg-efi --sourceparams "format=grub-efi,loader=grub-efi,install-kernel-into-bootdir=false" --ondisk sda --fstype=vfat --label efi --active --align 1024 --fixed-size 256M
 
 # ── rootfs-a (active slot) ────────────────────────────────────────────────────
-part / --source rootfs --ondisk sda --fstype=ext4 --label rootfs-a \
-    --align 1024 --fixed-size 8192M
+part / --source rootfs --ondisk sda --fstype=ext4 --label rootfs-a --align 1024 --fixed-size 8192M
 
 # ── rootfs-b (standby slot) ───────────────────────────────────────────────────
-# Empty at build time; SWUpdate streams the compressed rootfs image here during
+# Empty at build time, SWUpdate streams the compressed rootfs image here during
 # OTA.  post-install.sh relabels it with e2label after the write.
-part --source empty --ondisk sda --fstype=ext4 --label rootfs-b \
-    --align 1024 --fixed-size 8192M
+part --source empty --ondisk sda --fstype=ext4 --label rootfs-b --align 1024 --fixed-size 8192M
 
 # ── /home (persistent across OTA) ────────────────────────────────────────────
 # Created at 512 MB here so the .wic image stays small.
 # sequoia-home-init.service expands it to fill the actual storage on first boot.
-part /home --source empty --ondisk sda --fstype=ext4 --label home \
-    --align 1024 --fixed-size 512M
+part /home --source empty --ondisk sda --fstype=ext4 --label home --align 1024 --fixed-size 512M
