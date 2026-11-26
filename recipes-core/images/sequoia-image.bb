@@ -1,7 +1,7 @@
 SUMMARY = "Sequoia OS — production image for Intel x86 (LattePanda)"
 DESCRIPTION = "Full image with A/B OTA (SWUpdate), gRPC/Protobuf middleware, \
 hardware interface tooling, and connectivity."
-HOMEPAGE = "https://github.com/SiliconCentric/Sequoia-OS"
+HOMEPAGE = "https://github.com/soccentric-sequoia/Sequoia-OS"
 LICENSE = "MIT"
 
 # Base on core-image-full-cmdline (provides bash, sshd-openssh, package

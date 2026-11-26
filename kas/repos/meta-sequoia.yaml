@@ -3,7 +3,7 @@ header:
 
 repos:
   meta-sequoia:
-    url: git@github.com:SiliconCentric/meta-sequoia.git
+    url: https://github.com/soccentric-sequoia/meta-sequoia.git
     branch: master
     # Sequoia-OS is itself the meta-sequoia layer (conf/layer.conf lives at the
     # repo root), so kas treats the repository root as the layer path.
