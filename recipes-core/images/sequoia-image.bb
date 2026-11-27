@@ -17,7 +17,6 @@ IMAGE_FEATURES += "ssh-server-openssh"
 # OTA / swupdate — A/B rootfs slot switching, web UI on :8080
 IMAGE_INSTALL:append = " \
     swupdate \
-    swupdate-www \
     sequoia-swupdate-config \
 "
 
