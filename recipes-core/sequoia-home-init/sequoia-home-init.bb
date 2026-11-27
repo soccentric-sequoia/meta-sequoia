@@ -1,12 +1,7 @@
 SUMMARY = "Initialise /home on first boot after the persistent home partition is mounted"
-DESCRIPTION = "\
-On first boot the empty ext4 home partition (p4) is mounted at /home, hiding \
-the skeleton copy that useradd placed in the rootfs.  This one-shot service \
-expands the partition to fill the available storage and creates /home/sequoia \
-(and any other user under /home) with correct ownership so the user can log \
-in immediately."
+DESCRIPTION = "On first boot the empty ext4 home partition is mounted at /home. This one-shot service creates user homes and populates them from /etc/skel."
 
-LICENSE     = "MIT"
+LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = " \
@@ -18,7 +13,7 @@ S = "${WORKDIR}"
 
 inherit systemd
 
-SYSTEMD_SERVICE:${PN}     = "sequoia-home-init.service"
+SYSTEMD_SERVICE:${PN} = "sequoia-home-init.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
 RDEPENDS:${PN} = "bash util-linux parted e2fsprogs-resize2fs"

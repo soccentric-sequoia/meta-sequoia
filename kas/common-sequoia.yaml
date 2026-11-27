@@ -1,0 +1,47 @@
+header:
+  version: 14
+  includes:
+    - repos/poky.yaml
+    - repos/meta-openembedded.yaml
+    - repos/meta-swupdate.yaml
+    - repos/meta-sequoia.yaml
+
+distro: poky
+target: sequoia-image
+
+local_conf_header:
+  base: |
+    # Init manager
+    INIT_MANAGER = "systemd"
+
+    # x86 EFI wic image output  (drop ext4 standalone — rootfs.ext4 is still
+    # produced as a side-effect of the wic build and used by the swu target)
+    IMAGE_FSTYPES = "wic.bz2 wic.bmap ext4"
+
+    # ── Intel x86 / LattePanda settings ──────────────────────────────────────
+    # genericx86-64 is in meta-yocto-bsp (part of poky) — no extra layer needed.
+    # EFI bootloader provided by grub-efi (pulled in automatically by the machine).
+    EFI_PROVIDER = "grub-efi"
+
+    # Custom A/B-aware GRUB config: bootimg-efi wic plugin picks this up when
+    # GRUB_CFG points to a staged file provided by sequoia-grub-cfg recipe.
+    GRUB_CFG = "${STAGING_DATADIR}/grub-efi/grub.cfg"
+
+    # Ensure sequoia-grub-cfg is staged before wic builds the EFI partition.
+    EXTRA_IMAGEDEPENDS += "sequoia-grub-cfg"
+
+    # Kernel command-line extras (GRUB appends these after root=LABEL=rootfs-a).
+    APPEND = "rootwait rw quiet console=ttyS0,115200n8 console=tty0"
+
+    # Shared caches (bind-mounted by Docker)
+    DL_DIR     ?= "${TOPDIR}/../downloads"
+    SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
+
+    # SWUpdate: enable built-in Mongoose web server and progress IPC
+    PACKAGECONFIG:append:pn-swupdate = " webserver"
+
+    # Required by Poky sanity checks (must match LOCALCONF_VERSION in poky)
+    CONF_VERSION = "2"
+
+    # Swupdate specific variables
+    SWUPDATE_INIT = "systemd"

@@ -1,0 +1,9 @@
+header:
+  version: 14
+
+repos:
+  meta-swupdate:
+    url: https://github.com/sbabic/meta-swupdate
+    branch: scarthgap
+    commit: a329ea9f9ef4eeb316f2da2dba4a9c1bcb106899
+    path: layers/meta-swupdate

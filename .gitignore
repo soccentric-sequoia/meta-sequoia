@@ -1,0 +1,61 @@
+# ─── Yocto build output ───────────────────────────────────────────────────────
+build/
+sstate-cache/
+downloads/
+
+# ─── KAS artefacts ────────────────────────────────────────────────────────────
+.kas-cache/
+
+# ─── Yocto / BitBake generated files ─────────────────────────────────────────
+# Cloned upstream layers (managed by KAS, never edited by hand)
+layers/
+
+# BitBake lock and pseudo database
+bitbake.lock
+pseudodone
+
+# SDK installers
+deploy/**/*.sh
+
+# Compiled Python
+*.pyc
+*.pyo
+__pycache__/
+
+# ─── Docker artefacts ─────────────────────────────────────────────────────────
+docker/**/*.tar
+docker/**/*.tar.gz
+docker/sdk/sdk.sh
+docker/esdk/esdk.sh
+
+# ─── SD card images (large) ───────────────────────────────────────────────────
+*.wic
+*.wic.bz2
+*.wic.bmap
+*.img
+*.img.bz2
+
+# ─── OTA / SWU artefacts ──────────────────────────────────────────────────────
+*.swu
+*.swu.sig
+
+# SWUpdate signing keys — NEVER commit private keys
+swupdate/keys/swupdate-private.pem
+**/*.pem
+**/*.key
+!recipes-swupdate/sequoia-swupdate-config/files/swupdate-public.pem
+
+# ─── Editor / IDE ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+
+deploy/
+kas-container

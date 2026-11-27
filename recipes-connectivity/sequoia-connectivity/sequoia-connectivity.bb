@@ -1,9 +1,4 @@
-SUMMARY = "Sequoia connectivity — DHCP on Ethernet, WiFi (wpa_supplicant) and Bluetooth"
-DESCRIPTION = "Installs systemd-networkd network/netdev files for Ethernet and WiFi, \
-a stub wpa_supplicant config, and a systemd preset enabling networkd, resolved, \
-wpa_supplicant and bluetooth.  Works with predictable interface names (enp*, wlp*) \
-as well as traditional names (eth0, wlan0) and LattePanda-style names (enp2s0, wlp3s0)."
-
+SUMMARY = "Sequoia connectivity - DHCP Ethernet, WiFi (wpa_supplicant) and Bluetooth"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
@@ -14,15 +9,13 @@ SRC_URI = " \
     file://20-wlan-vlan10.netdev \
     file://11-eth-vlan10.network \
     file://21-wlan-vlan10.network \
-    file://wpa_supplicant-wlan0.conf \
+    file://wpa_supplicant.conf \
     file://80-sequoia-connectivity.preset \
 "
 
-# wpa-supplicant and bluez5 must be present for the preset to enable them
 RDEPENDS:${PN} = "wpa-supplicant bluez5"
 
 do_install() {
-    # ── systemd-networkd network/netdev files ─────────────────────────────────
     install -d ${D}${sysconfdir}/systemd/network
     install -m 0644 ${WORKDIR}/10-eth.network \
                     ${D}${sysconfdir}/systemd/network/10-eth.network
@@ -37,17 +30,14 @@ do_install() {
     install -m 0644 ${WORKDIR}/21-wlan-vlan10.network \
                     ${D}${sysconfdir}/systemd/network/21-wlan-vlan10.network
 
-    # ── wpa_supplicant stub config (fill in SSID/PSK on target) ───────────────
     install -d ${D}${sysconfdir}/wpa_supplicant
-    install -m 0600 ${WORKDIR}/wpa_supplicant-wlan0.conf \
-                    ${D}${sysconfdir}/wpa_supplicant/wpa_supplicant-wlan0.conf
+    install -m 0600 ${WORKDIR}/wpa_supplicant.conf \
+                    ${D}${sysconfdir}/wpa_supplicant/wpa_supplicant.conf
 
-    # ── systemd preset — enable networkd, resolved, wpa_supplicant, BT ───────
     install -d ${D}${systemd_unitdir}/system-preset
     install -m 0644 ${WORKDIR}/80-sequoia-connectivity.preset \
                     ${D}${systemd_unitdir}/system-preset/80-sequoia-connectivity.preset
 
-    # ── Point /etc/resolv.conf at systemd-resolved stub ───────────────────────
     install -d ${D}${sysconfdir}
     ln -sf ../run/systemd/resolve/stub-resolv.conf \
            ${D}${sysconfdir}/resolv.conf

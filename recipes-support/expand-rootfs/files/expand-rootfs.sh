@@ -1,7 +1,6 @@
 #!/bin/bash
-# expand-rootfs.sh — Grow root partition and filesystem to fill the storage device.
+# expand-rootfs.sh — Grow root partition and filesystem to fill the SD card.
 # Runs once on first boot via systemd.  A flag file prevents repeated runs.
-# Handles NVMe (nvme0n1p2), SATA/USB (sda2), and eMMC (mmcblk0p2).
 
 set -euo pipefail
 
@@ -12,20 +11,14 @@ if [ -f "$FLAG" ]; then
     exit 0
 fi
 
-# ── Resolve root block device ─────────────────────────────────────────────────
+# ── Resolve root block device ───────────────────────────────────────────────
 ROOT_DEV=$(findmnt -n -o SOURCE /)
 ROOT_DEV_NAME="${ROOT_DEV#/dev/}"
 
-if [[ "$ROOT_DEV_NAME" =~ ^(nvme[0-9]+n[0-9]+)p([0-9]+)$ ]]; then
-    # NVMe: nvme0n1p2 → disk=nvme0n1, part=2
-    DISK_NAME="${BASH_REMATCH[1]}"
-    PART_NUM="${BASH_REMATCH[2]}"
-elif [[ "$ROOT_DEV_NAME" =~ ^(mmcblk[0-9]+)p([0-9]+)$ ]]; then
-    # eMMC/SD: mmcblk0p2 → disk=mmcblk0, part=2
+if [[ "$ROOT_DEV_NAME" =~ ^(mmcblk[0-9]+)p([0-9]+)$ ]]; then
     DISK_NAME="${BASH_REMATCH[1]}"
     PART_NUM="${BASH_REMATCH[2]}"
 elif [[ "$ROOT_DEV_NAME" =~ ^([a-z]+)([0-9]+)$ ]]; then
-    # SATA/USB: sda2 → disk=sda, part=2
     DISK_NAME="${BASH_REMATCH[1]}"
     PART_NUM="${BASH_REMATCH[2]}"
 else

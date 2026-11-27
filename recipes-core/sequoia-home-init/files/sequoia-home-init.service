@@ -1,7 +1,6 @@
 [Unit]
 Description=Initialise /home on first boot (persistent home partition)
 Documentation=file:///usr/lib/sequoia-home-init/sequoia-home-init.sh
-# Must run after /home (p4) is mounted and before the login services start.
 After=local-fs.target
 Before=getty.target sshd.service
 

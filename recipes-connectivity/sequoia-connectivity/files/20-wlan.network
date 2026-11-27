@@ -1,7 +1,6 @@
 [Match]
-# Matches predictable names (wlp3s0, wlp2s0) and traditional wlan0.
-# Covers LattePanda Intel AX200/AX201/AX210 wireless adapters.
-Name=wlan* wlp*
+# Match common wireless names across distros and kernel naming modes.
+Name=wlan* wl*
 
 [Network]
 DHCP=yes

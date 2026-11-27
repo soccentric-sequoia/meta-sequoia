@@ -1,27 +1,32 @@
-SUMMARY     = "Sequoia OS image for Intel x86 (LattePanda)"
-DESCRIPTION = "Full-featured Sequoia OS image: systemd init, SWUpdate A/B OTA, \
-GRUB EFI boot, Intel WiFi + Ethernet, gRPC/protobuf runtime, hardware interface \
-tools (I2C, SPI, GPIO, CAN, UART, PCIe/NVMe), and a persistent /home partition."
-
+SUMMARY = "Sequoia OS — production image for Intel x86 (LattePanda)"
+DESCRIPTION = "Full image with A/B OTA (SWUpdate), gRPC/Protobuf middleware, \
+hardware interface tooling, and connectivity."
+HOMEPAGE = "https://github.com/soccentric-sequoia/Sequoia-OS"
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-# Start from core-image-full-cmdline which gives us a complete CLI system.
-inherit core-image
-
+# Base on core-image-full-cmdline (provides bash, sshd-openssh, package
+# management and the base IMAGE_INSTALL framework).  core-image-full-cmdline
+# is an *image recipe*, not a bbclass, so it must be pulled in with `require`
+# (not `inherit`).  The previous split between this recipe (missing) and a
+# core-image-full-cmdline.bbappend left the kas target `sequoia-image`
+# without a provider; the canonical fix (mirroring Acadia/Orion) is a single
+# recipe carrying all the image deltas.
+require recipes-extended/images/core-image-full-cmdline.bb
 IMAGE_FEATURES += "ssh-server-openssh"
 
-# ── OTA via SWUpdate ──────────────────────────────────────────────────────────
+# OTA / swupdate — A/B rootfs slot switching, web UI on :8080
 IMAGE_INSTALL:append = " \
     swupdate \
     swupdate-www \
     sequoia-swupdate-config \
 "
 
-# ── Persistent /home partition init ──────────────────────────────────────────
+# Persistent /home partition init — creates /home/rpi on first boot after
+# the empty ext4 home partition (p4) is mounted over /home.
 IMAGE_INSTALL:append = " sequoia-home-init"
 
-# ── Connectivity — Ethernet DHCP, WiFi (wpa_supplicant), Bluetooth ────────────
+# Connectivity — Ethernet DHCP, WiFi (wpa_supplicant), Bluetooth
+# WiFi/BT packages are included for LattePanda variants with wireless modules.
 IMAGE_INSTALL:append = " \
     sequoia-connectivity \
     wpa-supplicant \
@@ -31,20 +36,7 @@ IMAGE_INSTALL:append = " \
     bluez5-dev \
 "
 
-# ── Intel WiFi firmware (Intel AX200/AX201/AX210 and related chips) ───────────
-# linux-firmware-iwlwifi covers most Intel wireless adapters used on LattePanda.
-IMAGE_INSTALL:append = " \
-    linux-firmware-iwlwifi \
-"
-
-# ── GRUB EFI bootloader (brought in by grub-efi via EFI_PROVIDER but listed
-#    explicitly for e2label / grub-editenv tooling in userspace) ──────────────
-IMAGE_INSTALL:append = " \
-    grub-efi \
-    e2fsprogs \
-"
-
-# ── gRPC + Protocol Buffers ───────────────────────────────────────────────────
+# gRPC + Protocol Buffers (C++ runtime, compiler plugin, and Python bindings)
 IMAGE_INSTALL:append = " \
     protobuf \
     protobuf-compiler \
@@ -55,7 +47,7 @@ IMAGE_INSTALL:append = " \
     sudo \
 "
 
-# ── Hardware interface tools ──────────────────────────────────────────────────
+# --- Hardware interface tools ------------------------------------------------
 
 # I2C
 IMAGE_INSTALL:append = " \
@@ -70,7 +62,7 @@ IMAGE_INSTALL:append = " \
     python3-spidev \
 "
 
-# GPIO (via Linux GPIO character device — works on Intel via ACPI/PCH GPIO)
+# GPIO
 IMAGE_INSTALL:append = " \
     libgpiod \
     libgpiod-tools \
@@ -118,11 +110,16 @@ IMAGE_INSTALL:append = " \
     python3-periphery \
 "
 
-# ── Add local user 'sequoia' with password 'sequoia' and sudo access ──────────
-# Password hash: echo -n "sequoia" | openssl passwd -6 -stdin
-inherit extrausers
+# Intel x86 machine defaults use an EFI-based A/B WIC layout.
+WKS_FILE:genericx86-64 = "sequoia-intel.wks"
+WKS_FILE:genericx86 = "sequoia-intel.wks"
+WKS_FILE:intel-corei7-64 = "sequoia-intel.wks"
+WKS_FILE:lattepanda = "sequoia-intel.wks"
+WKS_FILE:lattepanda-64 = "sequoia-intel.wks"
 
+# Operator account 'rpi' with password 'rpi' and sudo access
+inherit extrausers
 EXTRA_USERS_PARAMS = "\
-    useradd -m -s /bin/bash -G sudo sequoia; \
-    usermod -p '\$6\$rounds=10000\$uSQH8O3uoYhR\$7VFNEH.uPQhJ1L8UHX4B/qoSZ3Gv1fDhABXwV4HhbVJl/iNQ3Rl3gYa6.q.qMF3TnIPQ4MqGlnHKJRSnCJCe/' sequoia; \
+    useradd -m -s /bin/bash -G sudo rpi; \
+    usermod -p '\$6\$8.kfghMSYkTHsFqs\$fKQIEp.xMjitUYt9yXjEZBUvKqUOQvxekn5.9hWP9ewiLFSI0LQi5OpaDNfSqh4OU.tzN7co7olMAYg53/kCP0' rpi; \
 "

@@ -1,4 +1,4 @@
-# VLAN 10 on WiFi (wlan*/wlp*)
+# VLAN 10 on WiFi (wlan*/wl*)
 [NetDev]
 Name=wlan-vlan10
 Kind=vlan

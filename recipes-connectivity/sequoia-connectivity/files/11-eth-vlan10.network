@@ -1,4 +1,4 @@
-# VLAN 10 interface on Ethernet — DHCP
+# VLAN 10 interface on Ethernet - DHCP
 [Match]
 Name=eth-vlan10
 

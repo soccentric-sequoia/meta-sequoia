@@ -1,34 +1,23 @@
 software =
     {
         version = "@@VERSION@@";
-        hardware-compatibility = ["1.0"];
+        hardware- compatibility =["1.0"];
 
 /*
- * Sequoia OS — Intel x86 / GRUB EFI A/B rootfs OTA update
- *
- * Partition layout (GPT, /dev/sda):
- *   p1  efi        256 MB  FAT32 (EFI System Partition — GRUB)
- *   p2  rootfs-a   8 GB    ext4  (active rootfs)
- *   p3  rootfs-b   8 GB    ext4  (standby rootfs — OTA target)
- *   p4  home       512 MB+ ext4  (persistent /home, grows on first boot)
+ * Sequoia Intel x86 — A/B rootfs OTA update
  *
  * Workflow:
- *   1. pre-install.sh  — detects active slot via filesystem LABEL (blkid),
- *      derives the inactive slot, creates /dev/swupdate-inactive symlink
- *      and saves slot/device to /run/swupdate-target-{slot,dev}.
- *   2. The "raw" handler streams rootfs.ext4.gz onto /dev/swupdate-inactive.
- *   3. post-install.sh — relabels the newly-written partition via e2label so
- *      it retains the correct LABEL (rootfs-a or rootfs-b), mounts the EFI
- *      partition rw, and patches /boot/efi/EFI/BOOT/grub.cfg to reference
- *      the new slot so GRUB boots from it on next reboot.  Then unmounts EFI
- *      and cleans up temp files.
+ *   1. pre-install.sh identifies the inactive slot by rootfs label
+ *      (rootfs-a <-> rootfs-b) and
+ *      creates the /dev/swupdate-inactive symlink.
+ *   2. The "raw" handler streams rootfs.ext4.gz onto that device.
+ *   3. post-install.sh updates boot config under /boot so the new slot
+ *      is selected on the next reboot, then cleans up temp files.
+ *   4. SWUpdate triggers `reboot` via postupdatecmd in swupdate.cfg.
  *
  * To deliver the update:
  *   • Web UI  : http://<device-ip>:8080  (drag-and-drop .swu)
- *   • CLI push: swupdate-client -v <device-ip> sequoia-<version>.swu
- *
- * Build the .swu on the host:
- *   make swu BOARD=sequoia VERSION=1.0.0
+ *   • CLI push: swupdate-client -v <device-ip> sequoia-intel-<version>.swu
  */
 
 images: (

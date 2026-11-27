@@ -1,83 +1,53 @@
 #!/bin/bash
-# post-install.sh — SWUpdate post-install hook for Sequoia (Intel x86 / GRUB EFI A/B)
-#
-# After SWUpdate has written the new rootfs image to the inactive partition:
-#   1. Re-labels the inactive partition ext4 filesystem to rootfs-<slot>
-#      so the new rootfs keeps the expected LABEL after the swap.
-#   2. Locates the EFI partition, mounts it rw at /boot/efi.
-#   3. Replaces the rootfs label reference in grub.cfg so GRUB boots from
-#      the new slot on next reboot.
-#   4. Unmounts the EFI partition, cleans up /run artefacts.
+# SWUpdate post-install script for Sequoia Intel x86 A/B rootfs updates.
 
 set -euo pipefail
 
-log() { logger -t swupdate-postinstall "$*"; echo "$*" >&2; }
-
-# ── 1. Read slot/device saved by pre-install ──────────────────────────────────
-if [[ ! -f /run/swupdate-target-slot || ! -f /run/swupdate-target-dev ]]; then
-    log "ERROR: /run/swupdate-target-slot or /run/swupdate-target-dev missing"
-    exit 1
-fi
-
 TARGET_SLOT=$(cat /run/swupdate-target-slot)
-TARGET_DEV=$(cat  /run/swupdate-target-dev)
+TARGET_DEV=$(cat /run/swupdate-target-dev)
+TARGET_LABEL="rootfs-${TARGET_SLOT}"
+TARGET_ROOT_ARG="root=LABEL=${TARGET_LABEL}"
 
-log "Target slot: ${TARGET_SLOT}  device: ${TARGET_DEV}"
+echo "[swupdate post-install] activating slot ${TARGET_SLOT} (${TARGET_DEV}, label=${TARGET_LABEL})"
 
-# ── 2. Relabel the inactive partition ────────────────────────────────────────
-log "Relabelling ${TARGET_DEV} → rootfs-${TARGET_SLOT}"
-e2label "${TARGET_DEV}" "rootfs-${TARGET_SLOT}"
-
-# ── 3. Find the EFI partition ────────────────────────────────────────────────
-EFI_DEV=$(blkid -t "LABEL=efi" -o device 2>/dev/null || true)
-if [[ -z "${EFI_DEV}" ]]; then
-    EFI_DEV=$(blkid -t "PARTLABEL=efi" -o device 2>/dev/null || true)
+BOOT_WAS_RO=0
+if findmnt -n -o OPTIONS /boot 2>/dev/null | grep -qw ro; then
+    BOOT_WAS_RO=1
 fi
-if [[ -z "${EFI_DEV}" ]]; then
-    # Last resort: look for the first vfat partition on the same disk
-    DISK=$(lsblk -ndo PKNAME "${TARGET_DEV}" 2>/dev/null || \
-           echo "${TARGET_DEV}" | sed 's/p\?[0-9]\+$//')
-    EFI_DEV=$(lsblk -rno NAME,FSTYPE "/dev/${DISK}" 2>/dev/null | \
-              awk '$2=="vfat"{print "/dev/"$1}' | head -1)
+mount -o remount,rw /boot 2>/dev/null || true
+
+UPDATED=0
+
+if [[ -f /boot/cmdline.txt ]]; then
+    sed -Ei "s#root=[^ ]+#${TARGET_ROOT_ARG}#" /boot/cmdline.txt
+    UPDATED=1
 fi
 
-if [[ -z "${EFI_DEV}" ]]; then
-    log "ERROR: cannot locate EFI partition"
+if compgen -G "/boot/loader/entries/*.conf" > /dev/null; then
+    for entry in /boot/loader/entries/*.conf; do
+        sed -Ei "s#root=[^ ]+#${TARGET_ROOT_ARG}#" "${entry}"
+    done
+    UPDATED=1
+fi
+
+for grub_cfg in /boot/grub/grub.cfg /boot/grub2/grub.cfg; do
+    if [[ -f "${grub_cfg}" ]]; then
+        sed -Ei "s#root=[^ ]+#${TARGET_ROOT_ARG}#g" "${grub_cfg}"
+        UPDATED=1
+    fi
+done
+
+if [[ "${UPDATED}" -eq 0 ]]; then
+    echo "[swupdate post-install] ERROR: no supported boot config found under /boot" >&2
     exit 1
 fi
-log "EFI partition: ${EFI_DEV}"
 
-# ── 4. Mount EFI partition rw and update grub.cfg ────────────────────────────
-EFI_MOUNT=/boot/efi
-GRUB_CFG="${EFI_MOUNT}/EFI/BOOT/grub.cfg"
-
-mkdir -p "${EFI_MOUNT}"
-if mountpoint -q "${EFI_MOUNT}"; then
-    # Already mounted — remount rw
-    mount -o remount,rw "${EFI_MOUNT}"
-    REMOUNTED=1
-else
-    mount -t vfat "${EFI_DEV}" "${EFI_MOUNT}"
-    REMOUNTED=0
+if [[ "${BOOT_WAS_RO}" -eq 1 ]]; then
+    mount -o remount,ro /boot 2>/dev/null || true
 fi
 
-if [[ ! -f "${GRUB_CFG}" ]]; then
-    log "WARNING: ${GRUB_CFG} not found — cannot update boot target"
-else
-    log "Updating grub.cfg: new slot = rootfs-${TARGET_SLOT}"
-    sed -i "s|rootfs-[ab]|rootfs-${TARGET_SLOT}|g" "${GRUB_CFG}"
-fi
+echo "[swupdate post-install] boot config updated to ${TARGET_ROOT_ARG}"
 
-# ── 5. Unmount / remount ro ───────────────────────────────────────────────────
-if [[ "${REMOUNTED}" -eq 1 ]]; then
-    mount -o remount,ro "${EFI_MOUNT}"
-else
-    umount "${EFI_MOUNT}"
-fi
-
-# ── 6. Cleanup ────────────────────────────────────────────────────────────────
-rm -f /dev/swupdate-inactive
-rm -f /run/swupdate-target-slot
-rm -f /run/swupdate-target-dev
-
-log "post-install complete: system will boot from rootfs-${TARGET_SLOT} after reboot"
+rm -f /dev/swupdate-inactive \
+      /run/swupdate-target-slot \
+      /run/swupdate-target-dev

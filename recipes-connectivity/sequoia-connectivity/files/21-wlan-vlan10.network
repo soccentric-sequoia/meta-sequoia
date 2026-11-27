@@ -1,4 +1,4 @@
-# VLAN 10 interface on WiFi — DHCP
+# VLAN 10 interface on WiFi - DHCP
 [Match]
 Name=wlan-vlan10
 

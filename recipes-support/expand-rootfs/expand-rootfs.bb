@@ -1,7 +1,6 @@
-SUMMARY = "Expand root filesystem to fill the storage device on first boot"
+SUMMARY = "Expand root filesystem to fill the SD card on first boot"
 DESCRIPTION = "Systemd one-shot service that grows the root partition \
-and resizes the ext4 filesystem so all available storage space is used. \
-Works for NVMe (nvme0n1p2), SATA (sda2), and eMMC (mmcblk0p2)."
+and resizes the ext4 filesystem so all available SD card space is used."
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
@@ -12,12 +11,12 @@ SRC_URI = " \
 
 inherit systemd
 
-SYSTEMD_SERVICE:${PN}     = "expand-rootfs.service"
+SYSTEMD_SERVICE:${PN} = "expand-rootfs.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
-# parted         : resize the partition table entry
+# parted  : resize the partition table entry
 # e2fsprogs-resize2fs : grow the live ext4 filesystem
-# util-linux     : findmnt, partprobe, udevadm already pulled in by base image
+# util-linux : findmnt, partprobe, udevadm already pulled in by base image
 RDEPENDS:${PN} = "bash parted e2fsprogs-resize2fs util-linux"
 
 do_install() {

@@ -1,0 +1,14 @@
+header:
+  version: 14
+  includes:
+    - ../common-sequoia.yaml
+
+# LattePanda (Intel x86_64) — genericx86-64 is in meta-yocto-bsp (poky).
+# Supports LattePanda Sigma (i5-1340P), Mu (N100), 3 Delta (N5105) and
+# any other x86-64 board that boots via UEFI/GRUB.
+machine: genericx86-64
+
+local_conf_header:
+  wks: |
+    # A/B OTA partition layout (see meta-sequoia/wic/sequoia-intel.wks)
+    WKS_FILE = "sequoia-intel.wks"
